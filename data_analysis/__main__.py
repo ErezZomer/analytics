@@ -11,7 +11,9 @@ def main() -> int:
         (int): 0 on success, -1 on failure.
     """
     try:
-        analytics = VehicleData("sensor_data", "s3://erez-test-bucket-me/reports/output/")
+        analytics = VehicleData(
+            "sensor_data", "s3://erez-test-bucket-me/reports/output/"
+        )
         if analytics.run():
             print(analytics.results)
         else:
@@ -24,4 +26,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     exit(main())
-    

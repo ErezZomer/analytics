@@ -6,8 +6,8 @@ import pandas as pd
 
 
 class AthenClient:
-    """A class to handle query and retreival of data from aws s3.
-    """
+    """A class to handle query and retreival of data from aws s3."""
+
     def __init__(self, db: str, s3_results_path: str) -> None:
         self._logger = logging.getLogger(self.__class__.__name__)
         self._client = boto3.client("athena")
@@ -23,7 +23,7 @@ class AthenClient:
 
         Args:
             query (str): The SQL query.
-        
+
         Returns:
             (int): The execution id (query id).
         """
@@ -38,8 +38,7 @@ class AthenClient:
         return self.query_id
 
     def update_query_details(self) -> None:
-        """_summary_
-        """
+        """_summary_"""
         self._details = self._client.get_query_execution(
             QueryExecutionId=self._execution_id
         )
@@ -79,4 +78,3 @@ class AthenClient:
             return self._execution_id
         else:
             return None
-

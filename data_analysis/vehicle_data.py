@@ -5,7 +5,7 @@ import time
 import pandas as pd
 
 from analytics.aws.athena_client import AthenClient
-from analytics.sql.query_builder import TrueDetectionsQuery, CountedDistancesQuery, RoundedDistanceQuery
+from analytics.sql.query_builder import TrueDetectionsQuery
 
 
 class VehicleData:
@@ -18,7 +18,9 @@ class VehicleData:
         self._step = 10
         self._logger = getLogger(self.__class__.__name__)
         self._athena = AthenClient(db, s3_results_uri)
-        self.query_builder = TrueDetectionsQuery(self._vehicles, self._min, self._max, self._step)
+        self.query_builder = TrueDetectionsQuery(
+            self._vehicles, self._min, self._max, self._step
+        )
         self._results = None
 
     def exclude_vehicles(self, vehicles: set):
@@ -28,7 +30,9 @@ class VehicleData:
             vehicles (set): a set of vehicles types.
         """
         self._vehicles |= vehicles
-        self.query_builder = TrueDetectionsQuery(self._vehicles, self._min, self._max, self._step)
+        self.query_builder = TrueDetectionsQuery(
+            self._vehicles, self._min, self._max, self._step
+        )
 
     def set_boundaries(
         self, min_dist: int = 1, max_dist: int = 100, step_dist: int = 10
@@ -56,7 +60,9 @@ class VehicleData:
         self._min = min_dist
         self._max = max_dist
         self._step = step_dist
-        self.query_builder = TrueDetectionsQuery(self._vehicles, min_dist, max_dist, step_dist)
+        self.query_builder = TrueDetectionsQuery(
+            self._vehicles, min_dist, max_dist, step_dist
+        )
 
     def run(self):
         """Sends the Query to athena and wait for results.

@@ -5,6 +5,7 @@ with open("README.md", "r") as fh:
 
 requirements = [
     "boto3==1.34.53",
+    "pandas==2.0.3",
     "pydantic==2.6.3"
 ]
 

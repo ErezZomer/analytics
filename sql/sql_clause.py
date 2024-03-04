@@ -4,8 +4,8 @@ from pydantic import BaseModel
 
 
 class ConditionExpression(BaseModel):
-    """A class which represnts an expression that might be used inside SQL clauses.
-    """
+    """A class which represnts an expression that might be used inside SQL clauses."""
+
     variable: str
     operator: str
     value: str
@@ -21,8 +21,8 @@ class ConditionExpression(BaseModel):
 
 
 class ConditionBetweenExpression(BaseModel):
-    """A class which represnt a BETWEEN expression that might be used inside SQL clauses.
-    """
+    """A class which represnt a BETWEEN expression that might be used inside SQL clauses."""
+
     variable: str
     min_value: int
     max_value: int
@@ -38,8 +38,8 @@ class ConditionBetweenExpression(BaseModel):
 
 
 class SubQueryExpression(BaseModel):
-    """Encapsulates subquery inside parentheses.
-    """
+    """Encapsulates subquery inside parentheses."""
+
     subquery: str
 
     @property
@@ -53,8 +53,8 @@ class SubQueryExpression(BaseModel):
 
 
 class SqlClause(BaseModel):
-    """A Base class for representing SQL clause.
-    """
+    """A Base class for representing SQL clause."""
+
     command: str
     clause: str = ""
 
@@ -66,8 +66,8 @@ class SqlClause(BaseModel):
 
 
 class AsClause(SqlClause):
-    """A class for adding alias to SQL.
-    """
+    """A class for adding alias to SQL."""
+
     alias: str
 
     def __init__(self, alias: str) -> None:
@@ -79,22 +79,20 @@ class AsClause(SqlClause):
         super().__init__(command="AS", alias=alias)
 
     def build(self):
-        """Builds the SQL Clause and store it in self.clause.
-        """
+        """Builds the SQL Clause and store it in self.clause."""
         self.clause = f"{self.command} {self.alias}"
 
 
 class SelectClause(SqlClause):
-    """This class implements the SELECT clause of SQL.
-    """
+    """This class implements the SELECT clause of SQL."""
+
     fields: list = []
 
     def __init__(self, fields: list) -> None:
         super().__init__(command="SELECT", fields=fields)
 
     def build(self):
-        """Builds the SQL Clause and store it in self.clause.
-        """
+        """Builds the SQL Clause and store it in self.clause."""
         fields = ",\n\t".join(self.fields)
         self.clause = f"{self.command} {fields}"
 
@@ -139,7 +137,7 @@ class SelectClause(SqlClause):
         Args:
             field (str): The name of the field to maximize
             alias (AsClause, optional): ads and aliasing. Defaults to None.
-        """        
+        """
         self._aggr_func("max", field, alias)
 
     def min_aggr(self, field, alias: AsClause):
@@ -148,7 +146,7 @@ class SelectClause(SqlClause):
         Args:
             field (str): The name of the field to minimize.
             alias (AsClause, optional): ads and aliasing. Defaults to None.
-        """        
+        """
         self._aggr_func("min", field, alias)
 
     def averge_aggr(self, field, alias: AsClause):
@@ -157,25 +155,23 @@ class SelectClause(SqlClause):
         Args:
             field (str): The name of the field to average.
             alias (AsClause, optional): ads and aliasing. Defaults to None.
-        """        
+        """
         self._aggr_func("avg", field, alias)
 
 
 class OptionCluase(SqlClause):
-    """This class implements the WHEN clause inside CASE of SQL.
-    """
+    """This class implements the WHEN clause inside CASE of SQL."""
+
     options: list = []
 
     def __init__(
         self,
     ) -> None:
-        """Ctor.
-        """
+        """Ctor."""
         super().__init__(command="WHEN")
 
     def build(self):
-        """Builds the SQL Clause and store it in self.clause.
-        """
+        """Builds the SQL Clause and store it in self.clause."""
         self.clause = "\n".join(self.options)
 
     def add_option(self, condition: str, value: str):
@@ -215,8 +211,8 @@ class OptionCluase(SqlClause):
 
 
 class CaseCaluse(SqlClause):
-    """This class implements the CASE clause of SQL.
-    """
+    """This class implements the CASE clause of SQL."""
+
     cases: list = []
 
     def __init__(
@@ -225,8 +221,7 @@ class CaseCaluse(SqlClause):
         super().__init__(command="CASE")
 
     def build(self):
-        """Builds the SQL Clause and store it in self.clause.
-        """
+        """Builds the SQL Clause and store it in self.clause."""
         cases = ",\n".join(self.cases)
 
         if len(self.cases) > 1:
@@ -245,8 +240,8 @@ class CaseCaluse(SqlClause):
 
 
 class FromClause(SqlClause):
-    """This class implements the FROM clause of SQL.
-    """
+    """This class implements the FROM clause of SQL."""
+
     table: str
 
     def __init__(self, table: str) -> None:
@@ -258,19 +253,17 @@ class FromClause(SqlClause):
         super().__init__(command="FROM", table=table)
 
     def build(self):
-        """Builds the SQL Clause and store it in self.clause.
-        """
+        """Builds the SQL Clause and store it in self.clause."""
         self.clause = f"{self.command}\n\t{self.table}"
 
 
 class WhereClause(SqlClause):
-    """This class implements the WHERE clause of SQL.
-    """
+    """This class implements the WHERE clause of SQL."""
+
     conditions: list = []
 
     def __init__(self) -> None:
-        """Ctor.
-        """
+        """Ctor."""
         super().__init__(command="WHERE")
 
     def and_condition(self, condition: str):
@@ -295,15 +288,14 @@ class WhereClause(SqlClause):
         self.conditions.append(condition)
 
     def build(self):
-        """Builds the SQL Clause and store it in self.clause.
-        """
+        """Builds the SQL Clause and store it in self.clause."""
         clause = " ".join(self.conditions)
         self.clause = f"{self.command} {clause}"
 
 
 class GroupByClause(SqlClause):
-    """This class implements the GROUP BY clause of SQL.
-    """
+    """This class implements the GROUP BY clause of SQL."""
+
     fields: List[str] = []
 
     def __init__(self, fields: list) -> None:
@@ -315,15 +307,14 @@ class GroupByClause(SqlClause):
         super().__init__(command="GROUP BY", fields=fields)
 
     def build(self):
-        """Builds the SQL Clause and store it in self.clause.
-        """
+        """Builds the SQL Clause and store it in self.clause."""
         fields = ",\n\t".join(self.fields)
         self.clause = f"{self.command}\n\t{fields}"
 
 
 class OrderByClause(SqlClause):
-    """This class implements the ORDER BY clause of SQL.
-    """
+    """This class implements the ORDER BY clause of SQL."""
+
     fields: list = []
 
     def __init__(self, fields: list) -> None:
@@ -335,7 +326,6 @@ class OrderByClause(SqlClause):
         super().__init__(command="ORDER BY", fields=fields)
 
     def build(self):
-        """Builds the SQL Clause and store it in self.clause.
-        """
+        """Builds the SQL Clause and store it in self.clause."""
         fields = ",\n\t".join(self.fields)
         self.clause = f"{self.command}\n\t{fields}"

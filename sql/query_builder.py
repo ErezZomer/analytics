@@ -10,12 +10,18 @@ from analytics.sql.sql_clause import (
     CaseCaluse,
     ConditionExpression,
     ConditionBetweenExpression,
-    SubQueryExpression
+    SubQueryExpression,
 )
 
 
 class QueryBuilder(ABC):
-    def __init__(self, exclude_vehicles: set, min_dist: int = 1, max_dist: int = 100, step_dist: int = 10) -> None:
+    def __init__(
+        self,
+        exclude_vehicles: set,
+        min_dist: int = 1,
+        max_dist: int = 100,
+        step_dist: int = 10,
+    ) -> None:
         self._query = None
         self._vehicles = exclude_vehicles
         self._min = min_dist
@@ -47,9 +53,9 @@ class QueryBuilder(ABC):
         query = str()
         select_ = self.build_select()
         from_ = self.build_from()
-        where_= self.build_where()
-        group_= self.build_group_by()
-        order_= self.build_order_by()
+        where_ = self.build_where()
+        group_ = self.build_group_by()
+        order_ = self.build_order_by()
 
         query = f"{select_}\n{from_}\n{where_}\n{group_}\n{order_}\n"
         self._query = query.strip()
@@ -59,7 +65,9 @@ class RoundedDistanceQuery(QueryBuilder):
     def build_select(self):
         option = OptionCluase()
         for i in range(self._min, self._max + 1, self._step):
-            condition = ConditionBetweenExpression(variable="distance", min_value=i, max_value=i+self._step-1)
+            condition = ConditionBetweenExpression(
+                variable="distance", min_value=i, max_value=i + self._step - 1
+            )
             option.add_option(condition.expression, i)
         option.add_alternative(0)
         dist_alias = AsClause("dist")
@@ -76,6 +84,7 @@ class RoundedDistanceQuery(QueryBuilder):
         fromc.build()
         return fromc.clause
 
+
 class CountedDistancesQuery(QueryBuilder):
     def build_select(self):
         select = SelectClause(["vehicle_type", "dist"])
@@ -87,7 +96,9 @@ class CountedDistancesQuery(QueryBuilder):
         return select.clause
 
     def build_from(self):
-        rounded_distances = RoundedDistanceQuery(self._vehicles, self._min, self._max, self._step)
+        rounded_distances = RoundedDistanceQuery(
+            self._vehicles, self._min, self._max, self._step
+        )
         rounded_distances.build_query()
         rounded_distances_table = SubQueryExpression(subquery=rounded_distances.query)
         fromc = FromClause(rounded_distances_table.expression)
@@ -112,17 +123,21 @@ class TrueDetectionsQuery(QueryBuilder):
             case = CaseCaluse()
             option = OptionCluase()
             condition = ConditionExpression(variable="dist", operator="=", value=f"{i}")
-            option.add_option(condition.expression, "100.0 * number_of_detections / number_of_dist")
+            option.add_option(
+                condition.expression, "100.0 * number_of_detections / number_of_dist"
+            )
             option.end_option()
             case.add_case(option)
             case.build()
-            alias = AsClause(f"\"{i}_{i + self._step -1}\"")
+            alias = AsClause(f'"{i}_{i + self._step -1}"')
             select.max_aggr(case.clause, alias)
         select.build()
         return select.clause
 
     def build_from(self) -> str:
-        counted_distances = CountedDistancesQuery(self._vehicles, self._min, self._max, self._step)
+        counted_distances = CountedDistancesQuery(
+            self._vehicles, self._min, self._max, self._step
+        )
         counted_distances.build_query()
         counted_distances_table = SubQueryExpression(subquery=counted_distances.query)
         fromc = FromClause(counted_distances_table.expression)
@@ -131,10 +146,14 @@ class TrueDetectionsQuery(QueryBuilder):
 
     def build_where(self) -> str:
         where = WhereClause()
-        condition = ConditionExpression(variable="vehicle_type", operator="!=", value="'ignore'")
+        condition = ConditionExpression(
+            variable="vehicle_type", operator="!=", value="'ignore'"
+        )
         where.and_condition(condition.expression)
         for vehicle in self._vehicles:
-            condition = ConditionExpression(variable="vehicle_type", operator="!=", value=f"'{vehicle}'")
+            condition = ConditionExpression(
+                variable="vehicle_type", operator="!=", value=f"'{vehicle}'"
+            )
             where.and_condition(condition.expression)
         where.build()
         return where.clause
