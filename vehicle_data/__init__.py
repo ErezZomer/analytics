@@ -1,1 +1,0 @@
-from .vehicle_data import VehicleData

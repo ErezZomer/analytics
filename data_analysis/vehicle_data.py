@@ -12,13 +12,13 @@ class VehicleData:
     """The main class for querying vehicle data from athena."""
 
     def __init__(self, db: str, s3_results_uri) -> None:
-        self._logger = getLogger(self.__class__.__name__)
-        self._athena = AthenClient(db, s3_results_uri)
-        self.query_builder = RoundedDistanceQuery()
         self._vehicles = set()
         self._min = 1
         self._max = 100
         self._step = 10
+        self._logger = getLogger(self.__class__.__name__)
+        self._athena = AthenClient(db, s3_results_uri)
+        self.query_builder = TrueDetectionsQuery(self._vehicles, self._min, self._max, self._step)
         self._results = None
 
     def exclude_vehicles(self, vehicles: set):
@@ -28,6 +28,7 @@ class VehicleData:
             vehicles (set): a set of vehicles types.
         """
         self._vehicles |= vehicles
+        self.query_builder = TrueDetectionsQuery(self._vehicles, self._min, self._max, self._step)
 
     def set_boundaries(
         self, min_dist: int = 1, max_dist: int = 100, step_dist: int = 10
@@ -55,6 +56,7 @@ class VehicleData:
         self._min = min_dist
         self._max = max_dist
         self._step = step_dist
+        self.query_builder = TrueDetectionsQuery(self._vehicles, min_dist, max_dist, step_dist)
 
     def run(self):
         """Sends the Query to athena and wait for results.
@@ -66,9 +68,9 @@ class VehicleData:
             bool: True in case query was successfully executed, False otherwise.
         """
         res = False
-        self.query_builder.build_query(min_dist=self._min, max_dist=self._max, step_dist=self._step)
         timeout = int(os.getenv("QUERY_TIMEOUT_SECS", "5"))
         interval = float(os.getenv("QUERY_STATUS_CHECK_INTERVAL_SECS", "0.1"))
+        self.query_builder.build_query()
         start_time = time.perf_counter()
         self._athena.execute(self.query_builder.query)
         while self._athena.status != "SUCCEEDED":
@@ -82,7 +84,7 @@ class VehicleData:
         if self._athena.status == "SUCCEEDED":
             self._results = self._athena.get_query_results()
             self._logger.info(
-                f"Successfully retrived query_id: {self._athena.query_id} results."
+                f"Successfully retrived query_id: {self._athena._execution_id} results."
             )
             res = True
         else:
@@ -97,5 +99,5 @@ class VehicleData:
         Returns:
             pd.DataFrame: A Dataframe object with the query results.
         """
-        if self.results:
+        if not self._results is None:
             return self._results

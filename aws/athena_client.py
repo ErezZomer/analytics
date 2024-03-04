@@ -61,21 +61,22 @@ class AthenClient:
                 .Object(key=self._folder + self._execution_id + ".csv")
                 .get()
             )
-            return pd.read_csv(io.BytesIO(response["Body"].read()), encoding="utf8")
+            data = pd.read_csv(io.BytesIO(response["Body"].read()), encoding="utf8")
+            return data
         except Exception as e:
             self._logger.error(
                 f"Got the following error when trying to fetch data from S3: {e}"
             )
             return None
 
-    def query_id(self) -> int:
+    def query_id(self) -> str:
         """A property for getting execution id.
 
         Returns:
-            (int): If succeeded returns the execution id, -1 otherwise.
+            (int): If succeeded returns the execution id, else returns None.
         """
         if self._execution_id:
             return self._execution_id
         else:
-            return -1
+            return None
 
