@@ -5,16 +5,16 @@ import time
 import pandas as pd
 
 from analytics.aws.athena_client import AthenClient
-from analytics.sql.query_builder import TrueDetectionsQuery
+from analytics.sql.query_builder import TrueDetectionsQuery, CountedDistancesQuery, RoundedDistanceQuery
 
 
-class Analytics:
+class VehicleData:
     """The main class for querying vehicle data from athena."""
 
     def __init__(self, db: str, s3_results_uri) -> None:
         self._logger = getLogger(self.__class__.__name__)
         self._athena = AthenClient(db, s3_results_uri)
-        self.query_builder = TrueDetectionsQuery()
+        self.query_builder = RoundedDistanceQuery()
         self._vehicles = set()
         self._min = 1
         self._max = 100
@@ -66,7 +66,7 @@ class Analytics:
             bool: True in case query was successfully executed, False otherwise.
         """
         res = False
-        self.query_builder.build_query(self._min, self._max, self._step)
+        self.query_builder.build_query(min_dist=self._min, max_dist=self._max, step_dist=self._step)
         timeout = int(os.getenv("QUERY_TIMEOUT_SECS", "5"))
         interval = float(os.getenv("QUERY_STATUS_CHECK_INTERVAL_SECS", "0.1"))
         start_time = time.perf_counter()

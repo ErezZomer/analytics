@@ -19,20 +19,20 @@ class QueryBuilder(ABC):
         self._query = None
 
     @abstractmethod
-    def build_select(self) -> str:
+    def build_select(self, *args, **kwargs) -> str:
         pass
 
     @abstractmethod
-    def build_from(self) -> str:
+    def build_from(self, *args, **kwargs) -> str:
         pass
 
-    def build_where(self) -> str:
+    def build_where(self, *args, **kwargs) -> str:
         return ""
 
-    def build_group_by(self) -> str:
+    def build_group_by(self, *args, **kwargs) -> str:
         return ""
 
-    def build_order_by(self) -> str:
+    def build_order_by(self, *args, **kwargs) -> str:
         return ""
 
     @property
@@ -51,11 +51,11 @@ class QueryBuilder(ABC):
         self._query = query.strip()
 
 
-class RounderDistanceQuery(QueryBuilder):
-    def build_select(self, min_distance: int = 1, max_distance: int = 100, step: int = 10):
+class RoundedDistanceQuery(QueryBuilder):
+    def build_select(self, min_dist: int = 1, max_dist: int = 100, step_dist: int = 10):
         option = OptionCluase()
-        for i in range(min_distance, max_distance + 1, step):
-            condition = ConditionBetweenExpression(variable="distance", min_value=i, max_value=i + step - 1)
+        for i in range(min_dist, max_dist + 1, step_dist):
+            condition = ConditionBetweenExpression(variable="distance", min_value=i, max_value=i + step_dist - 1)
             option.add_option(condition.expression, i)
         option.add_alternative(0)
         dist_alias = AsClause("dist")
@@ -83,8 +83,8 @@ class CountedDistancesQuery(QueryBuilder):
         return select.clause
     
     def build_from(self, *args, **kwargs):
-        rounded_distances = RounderDistanceQuery()
-        rounded_distances.build_query()
+        rounded_distances = RoundedDistanceQuery()
+        rounded_distances.build_query(*args, **kwargs)
         rounded_distances_table = SubQueryExpression(subquery=rounded_distances.query)
         fromc = FromClause(rounded_distances_table.expression)
         fromc.build()
@@ -103,9 +103,9 @@ class CountedDistancesQuery(QueryBuilder):
 
 
 class TrueDetectionsQuery(QueryBuilder):
-    def build_select(self, min_distance: int = 1, max_distance: int = 100, step: int = 10):
+    def build_select(self, min_dist: int = 1, max_dist: int = 100, step_dist: int = 10):
         select = SelectClause(["vehicle_type"])
-        for i in range(min_distance, max_distance + 1, step):
+        for i in range(min_dist, max_dist + 1, step_dist):
             case = CaseCaluse()
             option = OptionCluase()
             condition = ConditionExpression(variable="dist", operator="=", value=f"{i}")
@@ -113,20 +113,20 @@ class TrueDetectionsQuery(QueryBuilder):
             option.end_option()
             case.add_case(option)
             case.build()
-            alias = AsClause(f"\"{i}_{i + step -1}\"")
+            alias = AsClause(f"\"{i}_{i + step_dist -1}\"")
             select.max_aggr(case.clause, alias)
         select.build()
         return select.clause
 
     def build_from(self, *args, **kwargs) -> str:
         counted_distances = CountedDistancesQuery()
-        counted_distances.build_query()
+        counted_distances.build_query(*args, **kwargs)
         counted_distances_table = SubQueryExpression(subquery=counted_distances.query)
         fromc = FromClause(counted_distances_table.expression)
         fromc.build()
         return fromc.clause
 
-    def build_where(self) -> str:
+    def build_where(self, *args, **kwargs) -> str:
         where = WhereClause()
         condition = ConditionExpression(variable="vehicle_type", operator="!=", value="'ignore'")
         where.and_condition(condition.expression)
@@ -142,3 +142,10 @@ class TrueDetectionsQuery(QueryBuilder):
         order = OrderByClause(["vehicle_type"])
         order.build()
         return order.clause
+
+
+#builder = TrueDetectionsQuery()
+#builder = CountedDistancesQuery()
+builder = RoundedDistanceQuery()
+builder.build_query(1,5,2)
+print(builder.query)

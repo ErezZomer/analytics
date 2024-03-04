@@ -1,5 +1,5 @@
 import logging
-from analytics.analytics import Analytics
+from analytics.vehicle_data import VehicleData
 
 Logger = logging.getLogger("Analytics")
 
@@ -11,7 +11,8 @@ def main() -> int:
         (int): 0 on success, -1 on failure.
     """
     try:
-        analytics = Analytics("sensor_data", "s3://erez-test-bucket-me/reports/output/")
+        analytics = VehicleData("sensor_data", "s3://erez-test-bucket-me/reports/output/")
+        analytics.set_boundaries()
         analytics.run()
         print(analytics.results)
         return 0
