@@ -15,6 +15,8 @@ from analytics.sql.sql_clause import (
 
 
 class QueryBuilder(ABC):
+    """A base class for building SQL queries."""
+
     def __init__(
         self,
         exclude_vehicles: set,
@@ -30,26 +32,55 @@ class QueryBuilder(ABC):
 
     @abstractmethod
     def build_select(self) -> str:
-        pass
+        """An abstract function for building the SELECT clause.
+
+        Returns:
+            str: The SELECT clause.
+        """
 
     @abstractmethod
     def build_from(self) -> str:
-        pass
+        """An abstract function for building the FROM clause.
+
+        Returns:
+            str: The FROM clause.
+        """
 
     def build_where(self) -> str:
+        """A function to override for building the WHERE clause.
+
+        Returns:
+            str: The WHERE clause.
+        """
         return ""
 
     def build_group_by(self) -> str:
+        """An function to override for building the GROUP BY clause.
+
+        Returns:
+            str: The GROUP BY clause.
+        """
         return ""
 
     def build_order_by(self) -> str:
+        """An function to override for building the ORDER BY clause.
+
+        Returns:
+            str: The ORDER BY clause.
+        """
         return ""
 
     @property
     def query(self) -> str:
+        """Returns the actual query.
+
+        Returns:
+            str: The whole SQL query.
+        """
         return self._query
 
     def build_query(self):
+        """Calls the various sub builds functions and and generate the complete SQL query."""
         query = str()
         select_ = self.build_select()
         from_ = self.build_from()
@@ -62,7 +93,16 @@ class QueryBuilder(ABC):
 
 
 class RoundedDistanceQuery(QueryBuilder):
+    """A class which implements a query which returns the distances
+    rounded to bin first distance.
+    """
+
     def build_select(self):
+        """A function for building the SELECT clause.
+
+        Returns:
+            str: The SELECT clause.
+        """
         option = OptionCluase()
         for i in range(self._min, self._max + 1, self._step):
             condition = ConditionBetweenExpression(
@@ -80,13 +120,27 @@ class RoundedDistanceQuery(QueryBuilder):
         return select.clause
 
     def build_from(self) -> str:
+        """A function for building the FROM clause.
+
+        Returns:
+            str: The FROM clause.
+        """
         fromc = FromClause("src")
         fromc.build()
         return fromc.clause
 
 
 class CountedDistancesQuery(QueryBuilder):
+    """Builds the query which count the number of rows for
+    each of the selected distances (the bins).
+    """
+
     def build_select(self):
+        """A function for building the SELECT clause.
+
+        Returns:
+            str: The SELECT clause.
+        """
         select = SelectClause(["vehicle_type", "dist"])
         dist_alias = AsClause("number_of_dist")
         select.count_aggr("dist", dist_alias)
@@ -96,6 +150,11 @@ class CountedDistancesQuery(QueryBuilder):
         return select.clause
 
     def build_from(self):
+        """A function for building the FROM clause.
+
+        Returns:
+            str: The FROM clause.
+        """
         rounded_distances = RoundedDistanceQuery(
             self._vehicles, self._min, self._max, self._step
         )
@@ -106,18 +165,40 @@ class CountedDistancesQuery(QueryBuilder):
         return fromc.clause
 
     def build_group_by(self) -> str:
+        """An function to override for building the GROUP BY clause.
+
+        Returns:
+            str: The GROUP BY clause.
+        """
         group = GroupByClause(["vehicle_type", "dist"])
         group.build()
         return group.clause
 
     def build_order_by(self) -> str:
+        """An function to override for building the ORDER BY clause.
+
+        Returns:
+            str: The ORDER BY clause.
+        """
         order = OrderByClause(["vehicle_type"])
         order.build()
         return order.clause
 
 
 class TrueDetectionsQuery(QueryBuilder):
+    """Builds the query which calculates the amount of detections
+    per rows per vehicle type per selected distance (the bins).
+
+    Args:
+        QueryBuilder (_type_): _description_
+    """
+
     def build_select(self):
+        """A function for building the SELECT clause.
+
+        Returns:
+            str: The SELECT clause.
+        """
         select = SelectClause(["vehicle_type"])
         for i in range(self._min, self._max + 1, self._step):
             case = CaseCaluse()
@@ -135,6 +216,11 @@ class TrueDetectionsQuery(QueryBuilder):
         return select.clause
 
     def build_from(self) -> str:
+        """A function for building the FROM clause.
+
+        Returns:
+            str: The FROM clause.
+        """
         counted_distances = CountedDistancesQuery(
             self._vehicles, self._min, self._max, self._step
         )
@@ -145,6 +231,11 @@ class TrueDetectionsQuery(QueryBuilder):
         return fromc.clause
 
     def build_where(self) -> str:
+        """An function to override for building the WHERE clause.
+
+        Returns:
+            str: The WHERE clause.
+        """
         where = WhereClause()
         condition = ConditionExpression(
             variable="vehicle_type", operator="!=", value="'ignore'"
@@ -159,11 +250,21 @@ class TrueDetectionsQuery(QueryBuilder):
         return where.clause
 
     def build_group_by(self) -> str:
+        """An function to override for building the GROUP BY clause.
+
+        Returns:
+            str: The GROUP BY clause.
+        """
         group = GroupByClause(["vehicle_type"])
         group.build()
         return group.clause
 
     def build_order_by(self) -> str:
+        """An function to override for building the ORDER BY clause.
+
+        Returns:
+            str: The ORDER BY clause.
+        """
         order = OrderByClause(["vehicle_type"])
         order.build()
         return order.clause

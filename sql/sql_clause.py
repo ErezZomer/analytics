@@ -62,7 +62,6 @@ class SqlClause(BaseModel):
         """A function to override with derived classes.
         This fucntion should build SQL clause of particular object.
         """
-        pass
 
 
 class AsClause(SqlClause):

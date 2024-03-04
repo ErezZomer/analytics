@@ -45,6 +45,12 @@ class AthenClient:
 
     @property
     def status(self) -> str:
+        """Fetch from athena the details on the query and returns
+        the status of the query.
+
+        Returns:
+            str: the current status.
+        """
         self.update_query_details()
         return self._details["QueryExecution"]["Status"]["State"]
 
