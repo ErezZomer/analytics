@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from sql_clause import (
+from analytics.sql.sql_clause import (
     SelectClause,
     FromClause,
     WhereClause,

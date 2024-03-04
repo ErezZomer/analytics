@@ -4,8 +4,8 @@ import time
 
 import pandas as pd
 
-from athena_client import AthenClient
-from query_builder import TrueDetectionsQuery
+from analytics.aws.athena_client import AthenClient
+from analytics.sql.query_builder import TrueDetectionsQuery
 
 
 class Analytics:
@@ -66,7 +66,7 @@ class Analytics:
             bool: True in case query was successfully executed, False otherwise.
         """
         res = False
-        self.query_builder.build_query()
+        self.query_builder.build_query(self._min, self._max, self._step)
         timeout = int(os.getenv("QUERY_TIMEOUT_SECS", "5"))
         interval = float(os.getenv("QUERY_STATUS_CHECK_INTERVAL_SECS", "0.1"))
         start_time = time.perf_counter()
