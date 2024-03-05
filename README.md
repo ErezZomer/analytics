@@ -3,7 +3,7 @@
 # Prerequisites
 1. set environment variables:
     - AWS_ACCESS_KEY_ID=<your_access_id>
-    - AWS_SECRET_ACCESS_KEY=Y<your access key>
+    - AWS_SECRET_ACCESS_KEY=Y<your_access_key>
     - AWS_DEFAULT_REGION=eu-west-3
 
 # installation:
